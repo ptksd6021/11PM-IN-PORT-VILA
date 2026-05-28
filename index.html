@@ -888,7 +888,7 @@ body, .blk, .bact, .bdet, .btime, .cbase-v, .cbuf-v,
       <span class="wc-name">Prateek</span>
       <button class="who-change" onclick="showIdentityModal()">change</button>
     </span></div>
-  <button id="tab-changelog-btn" onclick="toggleChangelog()" style="margin-left:auto;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+  <button id="tab-changelog-btn" onclick="openUndoDrawer()" style="margin-left:auto;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;gap:6px;white-space:nowrap;">
     🕐 Recent Changes <span class="chg-dot" id="chg-new" style="display:none;background:#e6a817;color:#1a3a4a;border-radius:10px;padding:1px 6px;font-size:10px;">new</span>
   </button>
 </div>
@@ -1595,7 +1595,7 @@ body, .blk, .bact, .bdet, .btime, .cbase-v, .cbuf-v,
 </div>
 
 <!-- FLOATING UNDO BUTTON -->
-<button class="float-undo-btn" id="float-undo-btn" onclick="toggleChangelog()">
+<button class="float-undo-btn" id="float-undo-btn" onclick="openUndoDrawer()">
   ↩ Recent Changes <span class="fub-badge" id="fub-badge" style="display:none">0</span>
 </button>
 
@@ -2343,6 +2343,8 @@ function showIdentityModal(){
   const people=D.people||[];
   // Split: first 6 are travellers, rest (Pinky, Snehal) are parent viewers
   const VIEWER_NAMES=['Pinky (Ammi)','Snehal (Mum)'];
+  // Ensure viewers are always present in the list (in case Gist data dropped them)
+  VIEWER_NAMES.forEach(vn=>{ if(!people.includes(vn)) people.push(vn); });
   const travellers=people.filter(p=>!VIEWER_NAMES.includes(p));
   const viewers=people.filter(p=>VIEWER_NAMES.includes(p));
 
@@ -3259,7 +3261,7 @@ function renderUndoDrawer(){
   const fc=document.getElementById('ud-filters');
   if(fc){
     fc.innerHTML='';
-    const people=['All',...new Set(visible.map(e=>e.who))];
+    const people=['All',...new Set(log.map(e=>e.who).filter(Boolean))];
     people.forEach(p=>{
       const btn=document.createElement('button');
       btn.className='ud-filter'+(drawerFilter===p?' on':'');
@@ -6349,8 +6351,8 @@ document.addEventListener('DOMContentLoaded', function(){
     },{once:true});
     audio.addEventListener('error',function(){
       _mp3Failed=true; _mp3El=null;
-      // No fallback to generated music — stay silent if MP3s not found
-      muteGain.gain.value=0;
+      // Fall back to generated Web Audio music when MP3s aren't available
+      if(muteGain && !muted) muteGain.gain.linearRampToValueAtTime(1, ctx.currentTime+0.4);
     },{once:true});
     _mp3El=audio; audio.load();
   }
